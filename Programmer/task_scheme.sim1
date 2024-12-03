@@ -1,0 +1,71 @@
+<circuit version="1.1.0-SR0" rev="1917" stepSize="1000000" stepsPS="1000000" NLsteps="100000" reaStep="1000000" animate="0" >
+
+<item itemtype="Subcircuit" CircId="Uno-1" mainComp="false" Show_id="true" Show_Val="false" Pos="-248,-100" rotation="0" hflip="1" vflip="1" label="Uno" idLabPos="10.1044,-4.73598" labelrot="0" valLabPos="-16,20" valLabRot="0" Logic_Symbol="false">
+<mainCompProps MainCompId="mega328-109" Frequency="16 MHz" Auto_Load="false" saveEepr="true" SerialMon="-1" />
+</item>
+
+<item itemtype="Resistor" CircId="Resistor-2" mainComp="false" ShowProp="Resistance" Show_id="false" Show_Val="true" Pos="-268,-8" rotation="0" hflip="1" vflip="1" label="Resistor-2" idLabPos="-16,-24" labelrot="0" valLabPos="-10.7681,-8.23492" valLabRot="0" Resistance="100 Ω" />
+
+<item itemtype="Resistor" CircId="Resistor-3" mainComp="false" ShowProp="Resistance" Show_id="false" Show_Val="true" Pos="-268,4" rotation="0" hflip="1" vflip="1" label="Resistor-3" idLabPos="-16,-24" labelrot="0" valLabPos="-9.8412,-8.15602" valLabRot="0" Resistance="100 Ω" />
+
+<item itemtype="LedRgb" CircId="LedRgb-5" mainComp="false" Show_id="true" Show_Val="false" Pos="-308,4" rotation="0" hflip="-1" vflip="1" label="LedRgb" idLabPos="-15.5522,-26.687" labelrot="0" valLabPos="-16,20" valLabRot="0" CommonCathode="true" Threshold_R="2.4 V" MaxCurrent_R="30 mA" Resistance_R="0.6 Ω" Threshold_G="3.5 V" MaxCurrent_G="30 mA" Resistance_G="0.6 Ω" Threshold_B="3.5 V" MaxCurrent_B="30 mA" Resistance_B="0.6 Ω" />
+
+<item itemtype="Subcircuit" CircId="Nano-6" mainComp="false" Show_id="true" Show_Val="false" Pos="108,-116" rotation="0" hflip="1" vflip="1" label="Nano" idLabPos="20.9945,-14.1232" labelrot="0" valLabPos="-16,20" valLabRot="0">
+<mainCompProps MainCompId="m328 TQFP-269" Frequency="16 MHz" Auto_Load="false" saveEepr="true" SerialMon="-1" />
+</item>
+
+<item itemtype="Servo" CircId="Servo-28" mainComp="false" Show_id="true" Show_Val="false" Pos="140,96" rotation="0" hflip="1" vflip="1" label="Servo" idLabPos="-23.3471,-39.1892" labelrot="0" valLabPos="-16,20" valLabRot="0" Speed="0.2 _s/60º" MinPulse="1000 _µs" MaxPulse="2000 _µs" Input_High_V="2.5 V" Input_Low_V="2.5 V" Input_Imped="1000 MΩ" />
+
+<item itemtype="Ssd1306" CircId="Ssd1306-31" mainComp="false" Show_id="true" Show_Val="false" Pos="-180,-180" rotation="0" hflip="1" vflip="1" label="Ssd1306" idLabPos="-17.9782,-63.9075" labelrot="0" valLabPos="-16,20" valLabRot="0" Color="White" Width="128 _px" Height="64 _px" Rotate="true" Control_Code="60" Frequency="100 _kHz" />
+
+<item itemtype="KY023" CircId="KY023-39" mainComp="false" Show_id="true" Show_Val="false" Pos="-72,-184" rotation="180" hflip="1" vflip="-1" label="KY023" idLabPos="-34,14.6697" labelrot="-90" valLabPos="-16,20" valLabRot="0" />
+
+<item itemtype="SR04" CircId="SR04-47" mainComp="false" Show_id="true" Show_Val="false" Pos="164,-196" rotation="0" hflip="1" vflip="1" label="SR04" idLabPos="-8.84214,-48.3977" labelrot="0" valLabPos="-16,20" valLabRot="0" />
+
+<item itemtype="Voltage Source" CircId="Voltage Source-58" mainComp="false" Show_id="false" Show_Val="false" Pos="36,-184" rotation="0" hflip="1" vflip="1" label="Voltage Source-58" idLabPos="-32,-48" labelrot="0" valLabPos="147.9,-107.762" valLabRot="360" Running="true" Value_Volt="1.965 V" MaxValue="5 V" MinValue="0 V" />
+
+<item itemtype="Push" CircId="Push-64" mainComp="false" Show_id="true" Show_Val="false" Pos="-288,-52" rotation="0" hflip="1" vflip="1" label="Push" idLabPos="-10.0666,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Norm_Close="false" Poles="1" />
+
+<item itemtype="Node" CircId="Node-66" mainComp="false" Pos="-240,36" />
+
+<item itemtype="Connector" uid="Connector-2" startpinid="Uno-1-10" endpinid="Resistor-3-rPin" pointList="-240,4,-252,4" />
+
+<item itemtype="Connector" uid="Connector-5" startpinid="LedRgb-5-Pin1" endpinid="Resistor-3-lPin" pointList="-292,4,-284,4" />
+
+<item itemtype="Connector" uid="Connector-138" startpinid="KY023-39-vry" endpinid="Uno-1-A3" pointList="-68,-148,-68,-68,-96,-68" />
+
+<item itemtype="Connector" uid="Connector-151" startpinid="Uno-1-A4" endpinid="Ssd1306-31-PinSda" pointList="-96,-76,-84,-76,-84,-124,-220,-124,-220,-132" />
+
+<item itemtype="Connector" uid="Connector-207" startpinid="Nano-6-0" endpinid="Uno-1-1" pointList="116,-92,-44,-92,-44,-116,-260,-116,-260,-76,-240,-76" />
+
+<item itemtype="Connector" uid="Connector-215" startpinid="SR04-47-inpin" endpinid="Voltage Source-58-outPin" pointList="76,-220,72,-220,72,-168,64,-168" />
+
+<item itemtype="Connector" uid="Connector-216" startpinid="SR04-47-trigpin" endpinid="Nano-6-3" pointList="164,-148,164,-136,100,-136,100,-60,116,-60" />
+
+<item itemtype="Connector" uid="Connector-217" startpinid="SR04-47-outpin" endpinid="Nano-6-4" pointList="172,-148,172,-128,92,-128,92,-52,116,-52" />
+
+<item itemtype="Connector" uid="Connector-219" startpinid="Servo-28-in0" endpinid="Nano-6-5V0" pointList="92,80,84,80,84,56,180,56,180,-76,164,-76" />
+
+<item itemtype="Connector" uid="Connector-221" startpinid="Servo-28-in1" endpinid="Nano-6-GND1" pointList="92,96,76,96,76,48,188,48,188,-92,164,-92" />
+
+<item itemtype="Connector" uid="Connector-230" startpinid="Nano-6-GND0" endpinid="Uno-1-GND0" pointList="116,-76,-36,-76,-36,-20,-96,-20" />
+
+<item itemtype="Connector" uid="Connector-231" startpinid="Push-64-switch0pinN" endpinid="Uno-1-4" pointList="-272,-52,-240,-52" />
+
+<item itemtype="Connector" uid="Connector-233" startpinid="LedRgb-5-Pin3" endpinid="Node-66-0" pointList="-324,4,-328,4,-328,36,-240,36" />
+
+<item itemtype="Connector" uid="Connector-234" startpinid="Node-66-2" endpinid="Uno-1-GND2" pointList="-240,36,-240,36" />
+
+<item itemtype="Connector" uid="Connector-235" startpinid="Nano-6-1" endpinid="Uno-1-0" pointList="116,-100,-52,-100,-52,-108,-252,-108,-252,-84,-240,-84" />
+
+<item itemtype="Connector" uid="Connector-232" startpinid="Push-64-pinP0" endpinid="Node-66-1" pointList="-304,-52,-336,-52,-336,36,-240,36" />
+
+<item itemtype="Connector" uid="Connector-150" startpinid="Ssd1306-31-PinSck" endpinid="Uno-1-A5" pointList="-228,-132,-76,-132,-76,-84,-96,-84" />
+
+<item itemtype="Connector" uid="Connector-260" startpinid="Nano-6-9" endpinid="Servo-28-in2" pointList="116,-12,68,-12,68,112,92,112" />
+
+<item itemtype="Connector" uid="Connector-266" startpinid="Resistor-2-rPin" endpinid="Uno-1-9" pointList="-252,-8,-252,-4,-240,-4" />
+
+<item itemtype="Connector" uid="Connector-267" startpinid="Resistor-2-lPin" endpinid="LedRgb-5-Pin0" pointList="-284,-8,-284,-4,-292,-4" />
+
+</circuit>
