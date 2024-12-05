@@ -69,7 +69,6 @@ display.write(start_text[i]);
 }
 
 
-
 void pin_out(void) {
 int i;
   display.clearDisplay();
