@@ -1,7 +1,7 @@
-<circuit version="1.1.0-SR0" rev="1917" stepSize="1000000" stepsPS="1000000" NLsteps="100000" reaStep="1000000" animate="0" >
+<circuit version="1.1.0-SR1" rev="2005" stepSize="1000000" stepsPS="1000000" NLsteps="100000" reaStep="1000000" animate="0" >
 
-<item itemtype="Subcircuit" CircId="Uno-1" mainComp="false" Show_id="true" Show_Val="false" Pos="-248,-100" rotation="0" hflip="1" vflip="1" label="Uno" idLabPos="10.1044,-4.73598" labelrot="0" valLabPos="-16,20" valLabRot="0" Logic_Symbol="false">
-<mainCompProps MainCompId="mega328-109" Frequency="16 MHz" Auto_Load="false" saveEepr="true" SerialMon="-1" />
+<item itemtype="Subcircuit" CircId="Uno-1" mainComp="false" Show_id="false" Show_Val="false" Pos="-248,-100" rotation="0" hflip="1" vflip="1" label="Uno" idLabPos="10.1044,-4.73598" labelrot="0" valLabPos="-16,20" valLabRot="0" Logic_Symbol="false">
+<mainCompProps MainCompId="mega328-109" Frequency="16 MHz" Program="test_button.hex" Auto_Load="false" saveEepr="true" MainMcu="true" SerialMon="-1" />
 </item>
 
 <item itemtype="Resistor" CircId="Resistor-2" mainComp="false" ShowProp="Resistance" Show_id="false" Show_Val="true" Pos="-268,-8" rotation="0" hflip="1" vflip="1" label="Resistor-2" idLabPos="-16,-24" labelrot="0" valLabPos="-10.7681,-8.23492" valLabRot="0" Resistance="100 Ω" />
@@ -11,7 +11,7 @@
 <item itemtype="LedRgb" CircId="LedRgb-5" mainComp="false" Show_id="true" Show_Val="false" Pos="-308,4" rotation="0" hflip="-1" vflip="1" label="LedRgb" idLabPos="-15.5522,-26.687" labelrot="0" valLabPos="-16,20" valLabRot="0" CommonCathode="true" Threshold_R="2.4 V" MaxCurrent_R="30 mA" Resistance_R="0.6 Ω" Threshold_G="3.5 V" MaxCurrent_G="30 mA" Resistance_G="0.6 Ω" Threshold_B="3.5 V" MaxCurrent_B="30 mA" Resistance_B="0.6 Ω" />
 
 <item itemtype="Subcircuit" CircId="Nano-6" mainComp="false" Show_id="true" Show_Val="false" Pos="108,-116" rotation="0" hflip="1" vflip="1" label="Nano" idLabPos="20.9945,-14.1232" labelrot="0" valLabPos="-16,20" valLabRot="0">
-<mainCompProps MainCompId="m328 TQFP-269" Frequency="16 MHz" Auto_Load="false" saveEepr="true" SerialMon="-1" />
+<mainCompProps MainCompId="m328 TQFP-269" Frequency="16 MHz" Program="nano-2.hex" Auto_Load="false" saveEepr="true" MainMcu="false" SerialMon="-1" />
 </item>
 
 <item itemtype="Servo" CircId="Servo-28" mainComp="false" Show_id="true" Show_Val="false" Pos="140,96" rotation="0" hflip="1" vflip="1" label="Servo" idLabPos="-23.3471,-39.1892" labelrot="0" valLabPos="-16,20" valLabRot="0" Speed="0.2 _s/60º" MinPulse="1000 _µs" MaxPulse="2000 _µs" Input_High_V="2.5 V" Input_Low_V="2.5 V" Input_Imped="1000 MΩ" />
@@ -24,7 +24,7 @@
 
 <item itemtype="Voltage Source" CircId="Voltage Source-58" mainComp="false" Show_id="false" Show_Val="false" Pos="36,-184" rotation="0" hflip="1" vflip="1" label="Voltage Source-58" idLabPos="-32,-48" labelrot="0" valLabPos="147.9,-107.762" valLabRot="360" Running="true" Value_Volt="1.965 V" MaxValue="5 V" MinValue="0 V" />
 
-<item itemtype="Push" CircId="Push-64" mainComp="false" Show_id="true" Show_Val="false" Pos="-288,-52" rotation="0" hflip="1" vflip="1" label="Push" idLabPos="-10.0666,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Norm_Close="false" Poles="1" />
+<item itemtype="Push" CircId="Push-64" mainComp="false" Show_id="true" Show_Val="false" Pos="-288,-52" rotation="0" hflip="1" vflip="1" label="Push" idLabPos="-9.44049,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Norm_Close="false" Poles="1" />
 
 <item itemtype="Node" CircId="Node-66" mainComp="false" Pos="-240,36" />
 
