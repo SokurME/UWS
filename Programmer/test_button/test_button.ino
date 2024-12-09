@@ -75,9 +75,10 @@ void loop() {
   display.setTextColor(SSD1306_WHITE); // Draw white text
   display.setCursor(0, 0);     // Start at top-left corner
   display.cp437(true);         // Use full 256 char 'Code Page 437' font
-  for (int i = 0; i < 5; i++) {
-    display.write(start_text[i]);
-  }
+  //for (int i = 0; i < 5; i++) {
+    //display.write(start_text[i]);
+  //}
+  display.println("Start");
   flagShowscreen = true;
   display.display();
   Serial.print("scrCnt=");
