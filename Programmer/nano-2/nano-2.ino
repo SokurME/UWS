@@ -7,10 +7,10 @@ Scheduler userScheduler;   // планировщик
 
 void senddata();   //задаем прототип для отправки данных
 
-Task taskSenddata(TASK_MILLISECOND * 20000, TASK_FOREVER, &senddata);   //указываем задание
+Task taskSenddata(TASK_MILLISECOND * 300, TASK_FOREVER, &senddata);   //указываем задание
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
 
  //добавляем задания в обработчик
   userScheduler.addTask(taskSenddata);   

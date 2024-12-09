@@ -15,10 +15,6 @@
 Scheduler userScheduler;   // планировщик
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-int start_text[] = { 83, 84, 65, 82, 84 };
-int distance1[] = { 68, 73, 83, 84, 65, 78, 67, 69, 49, 58 };
-int distance2[] = { 68, 73, 83, 84, 65, 78, 67, 69, 50, 58 };
-int depth[] = { 68, 69, 80, 84, 72, 58 };
 byte clicks = 0; //количество нажатий кнопки
 boolean ledState = false;            // переменная состояния светодиода 
 byte scrCnt = 0; // счетчик для таймера экрана
@@ -31,6 +27,8 @@ byte  buttonCount = 0;        // счетчик подтверждений со�
 #define TIME_BUTTON 12       // время устойчивого состояния кнопки (* 2 мс) 
 
 boolean flagShowscreen = false;
+boolean flagDistance1 = false; // флаг для приема дистанции1
+boolean flagDistance2 = false; // флаг для приема дистанции2
 
 String strData = ""; // для данных с Serial
 boolean recievedFlag = false; // флаг получения данных на Serial
@@ -42,7 +40,7 @@ void buttonclick();   //задаем прототип для нажатия кн
 Task taskShowscreen(TASK_SECOND * 1 , TASK_FOREVER, &showscreen);   //указываем задание
 Task taskButtonclick(TASK_MILLISECOND * 2 , TASK_FOREVER, &buttonclick);   //указываем задание
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   //инициализация дисплея  
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
@@ -51,6 +49,9 @@ void setup() {
   }
   // Clear the buffer
   display.clearDisplay();
+  display.setTextSize(2);      // Normal 1:1 pixel scale
+  display.setTextColor(SSD1306_WHITE); // Draw white text
+  display.cp437(true);         // Use full 256 char 'Code Page 437' font
 
   pinMode(PIN_BUTTON, INPUT_PULLUP); // Устаовили тип пина
   pinMode(PIN_LED, OUTPUT);  //Setup the LED
@@ -69,46 +70,50 @@ void loop() {
  case  1: //
   if (!flagShowscreen){
   taskShowscreen.enable();   //включаем задание
-  Serial.println("Start task screen");
   display.clearDisplay();
-  display.setTextSize(1);      // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE); // Draw white text
   display.setCursor(0, 0);     // Start at top-left corner
-  display.cp437(true);         // Use full 256 char 'Code Page 437' font
-  //for (int i = 0; i < 5; i++) {
-    //display.write(start_text[i]);
-  //}
   display.println("Start");
   flagShowscreen = true;
   display.display();
-  Serial.print("scrCnt=");
-  Serial.println(scrCnt);
   }
   
   if (scrCnt > 2) {  // через 2 с очищаем дисплей
-   Serial.print("scrCnt=");
    Serial.println(scrCnt);
    taskShowscreen.disable();
    scrCnt = 0;
      if (clicks == 1) {
          display.clearDisplay();
          display.display();
-         Serial.println("Cleared!");
 		 }
    }
  break;
  case 2:
+ scrCnt = 0;
+ if (!flagDistance1){
+ display.clearDisplay();
  tempStr = recieveData();
-  if ( tempStr !="") {
-   Serial.print("recived=");
-   Serial.println(tempStr);
+  if (tempStr != "") {
+   Serial.println("f2");
+   display.setCursor(0, 0);
+   display.println(tempStr);
+   display.display(); 
+   flagDistance1 = true;
   }
-
+ }
  break;
  case 3:
-   flagShowscreen = false;
- //  Serial.print("flagShowscreen=");
- //  Serial.println(flagShowscreen);
+ flagShowscreen = false;
+ flagDistance1 = false;
+ if (!flagDistance2){
+ display.clearDisplay();
+ tempStr = recieveData();
+  if (tempStr != "") {
+   display.setCursor(0, 0);
+   display.println(tempStr);
+   display.display(); 
+   flagDistance2 = true;
+  }
+ }
  break;
  }
 }
