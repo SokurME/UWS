@@ -21,6 +21,7 @@ byte scrCnt = 0; // счетчик для таймера экрана
 long recDistance1 = 0; // дистанция 1 с Uno
 long recDistance2 = 0; // дистанция 2 с Uno
 long diff = 0; // разница
+int joystickData = 0; // джойстик
 // переменные и константы для обработки сигнала кнопки
 boolean flagPress = false;    // признак кнопка в нажатом состоянии
 boolean flagClick = false;    // признак нажатия кнопки (фронт)
@@ -37,9 +38,12 @@ String tempStr = "";
 
 void showscreen() ;   //задаем прототип для вывода на экран "Start"
 void buttonclick();   //задаем прототип для нажатия кнопки
+void sendData();   //задаем прототип для отправки данных
 
 Task taskShowscreen(TASK_SECOND * 1 , TASK_FOREVER, &showscreen);   //указываем задание
 Task taskButtonclick(TASK_MILLISECOND * 2 , TASK_FOREVER, &buttonclick);   //указываем задание
+Task taskSendData(TASK_MILLISECOND * 350 , TASK_FOREVER, &sendData);   //указываем задание
+
 void setup() {
   Serial.begin(9600);
 
@@ -59,8 +63,10 @@ void setup() {
 
   //добавляем задания в обработчик
   userScheduler.addTask(taskShowscreen);   
-  userScheduler.addTask(taskButtonclick);   
+  userScheduler.addTask(taskButtonclick);
+  userScheduler.addTask(taskSendData); 
   taskButtonclick.enable();
+  taskSendData.enable();
 }
 
 void loop() {
@@ -170,8 +176,8 @@ void buttonclick() { //
    if (clicks == 4)
        {clicks = 1;}
  
-  Serial.print("clicks=");
-  Serial.println(clicks);
+//  Serial.print("clicks=");
+//  Serial.println(clicks);
     flagClick = false;       // сброс признака фронта кнопки
     ledState = ! ledState;   // инверсия состояние светодиода
     digitalWrite(PIN_LED, ledState);  // вывод состояния светодиода   
@@ -197,4 +203,10 @@ if (Serial.available() > 0) {  // если есть что-то на вход
   else
      return "";
 
+}
+
+void sendData(){
+// считать джойстик
+joystickData = 59;
+Serial.println(joystickData);
 }
