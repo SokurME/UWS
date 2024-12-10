@@ -22,7 +22,7 @@
 
 <item itemtype="SR04" CircId="SR04-47" mainComp="false" Show_id="true" Show_Val="false" Pos="164,-196" rotation="0" hflip="1" vflip="1" label="SR04" idLabPos="-8.84214,-48.3977" labelrot="0" valLabPos="-16,20" valLabRot="0" />
 
-<item itemtype="Voltage Source" CircId="Voltage Source-58" mainComp="false" Show_id="false" Show_Val="false" Pos="36,-184" rotation="0" hflip="1" vflip="1" label="Voltage Source-58" idLabPos="-32,-48" labelrot="0" valLabPos="147.9,-107.762" valLabRot="360" Running="true" Value_Volt="1.965 V" MaxValue="5 V" MinValue="0 V" />
+<item itemtype="Voltage Source" CircId="Voltage Source-58" mainComp="false" Show_id="false" Show_Val="false" Pos="36,-184" rotation="0" hflip="1" vflip="1" label="Voltage Source-58" idLabPos="-32,-48" labelrot="0" valLabPos="147.9,-107.762" valLabRot="360" Running="true" Value_Volt="0.485 V" MaxValue="5 V" MinValue="0 V" />
 
 <item itemtype="Push" CircId="Push-64" mainComp="false" Show_id="true" Show_Val="false" Pos="-288,-52" rotation="0" hflip="1" vflip="1" label="Push" idLabPos="-9.44049,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Norm_Close="false" Poles="1" />
 

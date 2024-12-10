@@ -18,8 +18,9 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 byte clicks = 0; //количество нажатий кнопки
 boolean ledState = false;            // переменная состояния светодиода 
 byte scrCnt = 0; // счетчик для таймера экрана
-int recDistance1 = 0; // дистанция 1 с Uno
-int recDistance2 = 0; // дистанция 2 с Uno
+long recDistance1 = 0; // дистанция 1 с Uno
+long recDistance2 = 0; // дистанция 2 с Uno
+long diff = 0; // разница
 // переменные и константы для обработки сигнала кнопки
 boolean flagPress = false;    // признак кнопка в нажатом состоянии
 boolean flagClick = false;    // признак нажатия кнопки (фронт)
@@ -44,7 +45,7 @@ void setup() {
 
   //инициализация дисплея  
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
-    Serial.println(F("SSD1306 allocation failed"));
+//    Serial.println(F("SSD1306 allocation failed"));
     for(;;); // Don't proceed, loop forever
   }
   // Clear the buffer
@@ -68,17 +69,19 @@ void loop() {
   
  switch (clicks) { 	// проверка порядка нажатия кнопки
  case  1: //
+  flagDistance2 = false;
   if (!flagShowscreen){
   taskShowscreen.enable();   //включаем задание
   display.clearDisplay();
-  display.setCursor(0, 0);     // Start at top-left corner
+  display.setTextSize(2);
+  display.setCursor(30, 20);     // Start at center
   display.println("Start");
   flagShowscreen = true;
   display.display();
   }
   
   if (scrCnt > 2) {  // через 2 с очищаем дисплей
-   Serial.println(scrCnt);
+  // Serial.println(scrCnt);
    taskShowscreen.disable();
    scrCnt = 0;
      if (clicks == 1) {
@@ -93,27 +96,43 @@ void loop() {
  display.clearDisplay();
  tempStr = recieveData();
   if (tempStr != "") {
-   Serial.println("f2");
+  // Serial.println("f2");
+   display.setTextSize(1);
    display.setCursor(0, 0);
-   display.println(tempStr);
+   display.println("Dist 1 =");
+   recDistance1 = tempStr.toInt();
+   display.setCursor(0, 10);
+   display.println(recDistance1);
    display.display(); 
    flagDistance1 = true;
+   }
   }
- }
+ tempStr = recieveData(); // читаем, чтобы очищать буфер
  break;
  case 3:
  flagShowscreen = false;
  flagDistance1 = false;
  if (!flagDistance2){
  display.clearDisplay();
+ display.setTextSize(1);
  tempStr = recieveData();
   if (tempStr != "") {
    display.setCursor(0, 0);
-   display.println(tempStr);
+   display.println("Dist 2 =");
+   recDistance2 = tempStr.toInt();
+   display.setCursor(0, 10);
+   display.println(recDistance2);
+   display.setCursor(0, 20);
+   display.println("Difference =");
+   diff = recDistance1 - recDistance2;
+   display.println(diff);
    display.display(); 
    flagDistance2 = true;
+ //  Serial.print("tempStr =");
+//   Serial.println(tempStr);
   }
  }
+ tempStr = recieveData(); // читаем, чтобы очищать буфер
  break;
  }
 }
@@ -148,8 +167,9 @@ void buttonclick() { //
   if (flagClick == true) {
     // было нажатие кнопки
    clicks++;
-   if (clicks == 4){clicks = 1;}
- // clicks = 3-clicks % 3;
+   if (clicks == 4)
+       {clicks = 1;}
+ 
   Serial.print("clicks=");
   Serial.println(clicks);
     flagClick = false;       // сброс признака фронта кнопки

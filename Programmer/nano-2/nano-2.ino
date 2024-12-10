@@ -1,12 +1,10 @@
 #include <TaskScheduler.h>
 
 //byte cnt = 0; // счетчик для таймера экрана
-#define trigPin 3
-#define echoPin 4
+#define PIN_TRIG 3
+#define PIN_ECHO 4
 
-int counter;
-float duration;
-float distance;
+long duration, cm;
 unsigned long time;
 
 // Создаем объекты 
@@ -14,12 +12,12 @@ Scheduler userScheduler;   // планировщик
 
 void senddata();   //задаем прототип для отправки данных
 
-Task taskSenddata(TASK_MILLISECOND * 1000, TASK_FOREVER, &senddata);   //указываем задание
+Task taskSenddata(TASK_MILLISECOND * 500, TASK_FOREVER, &senddata);   //указываем задание
 
 void setup() {
   Serial.begin(9600);
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
+  pinMode(PIN_TRIG, OUTPUT);
+  pinMode(PIN_ECHO, INPUT);
 
  //добавляем задания в обработчик
   userScheduler.addTask(taskSenddata);   
@@ -33,43 +31,16 @@ void loop() {
 }
 
 void senddata(){
-  digitalWrite(trigPin, LOW); 
-  delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
+  // Сначала генерируем короткий импульс длительностью 2-5 микросекунд.
+  digitalWrite(PIN_TRIG, LOW);
+  delayMicroseconds(5);
+  digitalWrite(PIN_TRIG, HIGH);
+  // Выставив высокий уровень сигнала, ждем около 10 микросекунд. В этот момент датчик будет посылать сигналы с частотой 40 КГц.
   delayMicroseconds(10);
-  digitalWrite( trigPin, LOW );
-  
-//  duration = pulseIn( echoPin, HIGH ); 
-
-  // Get Pulse duration with more accuracy than pulseIn()
-  duration = 0;
-  counter = 0;
-  while(--counter!=0 )
-  {
-    	if( PINB & 2 ) 
-    	{
-    	  time = micros();
-    	  break;
-    	}
-  }
-  counter = 0;
-  while( --counter!=0 )
-  {
-    	if( (PINB & 2)==0 ) 
-    	{
-    	  duration = micros()-time;
-    	  break;
-    	}
-  }
-
-  distance = ( duration/2 ) * 0.0344;
-  
- /* Serial.print("Distance: ");
-
-  if     ( distance > 400 ) Serial.print("> 400");
-  else if( distance < 2 )   Serial.print("< 2");
-  else                      Serial.print( distance );
-
-  Serial.println( " cm" );*/
- Serial.println(distance);
+  digitalWrite(PIN_TRIG, LOW);
+  //  Время задержки акустического сигнала на эхолокаторе.
+  duration = pulseIn(PIN_ECHO, HIGH);
+  // Теперь осталось преобразовать время в расстояние
+  cm = (duration / 2) / 29.1;
+ Serial.println(cm);
 }
