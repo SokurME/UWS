@@ -6,6 +6,10 @@
 
 long duration, cm;
 unsigned long time;
+String tempStr = "";
+String strData = ""; // для данных с Serial
+boolean recievedFlag = false; // флаг получения данных на Serial
+int servoAngle = 0; // угол поворота
 
 // Создаем объекты 
 Scheduler userScheduler;   // планировщик
@@ -27,7 +31,11 @@ void setup() {
 void loop() {
   //запуск планировщика заданий
   userScheduler.execute();
- // cnt++;
+  tempStr = recieveData();
+  if (tempStr != "") {
+  servoAngle = tempStr.toInt();
+  }
+ 
 }
 
 void senddata(){
@@ -43,4 +51,23 @@ void senddata(){
   // Теперь осталось преобразовать время в расстояние
   cm = (duration / 2) / 29.1;
  Serial.println(cm);
+}
+
+String recieveData(){
+if (Serial.available() > 0) {  // если есть что-то на вход
+    strData = "";                // очистить строку
+    while (Serial.available() > 0) {
+      // пока идут данные
+      strData += (char)Serial.read();  // получаем данные
+      delay(2);                        // обязательно задержка, иначе вылетим из цикла раньше времени
+    }
+    recievedFlag = true;  // поднять флаг что получили данные
+  }
+
+ if (recievedFlag) {
+      recievedFlag = false;  // данные приняты
+      return strData;
+     }
+  else
+     return "";
 }
