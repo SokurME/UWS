@@ -35,7 +35,7 @@ def detect_coord_white_objects(image):
     return contours
     
  #   for cnt in contours:
-#        (x,y),radius = cv.minEnclosingCircle(cnt)
+#        (x,y),radius = cv.minEnclosingCircle(cnt)100
   #      print(y)
    #     if 110<(y)<130:
     #        return y

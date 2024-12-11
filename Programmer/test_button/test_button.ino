@@ -5,23 +5,25 @@
 #include <Adafruit_SSD1306.h>
 
 #define PIN_BUTTON 4
-#define PIN_LED 9
+#define RED 9
+#define GRN 10
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+#define pinY    A3  // ось Y джойстика
 
 // Создаем объекты 
 Scheduler userScheduler;   // планировщик
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 byte clicks = 0; //количество нажатий кнопки
-boolean ledState = false;            // переменная состояния светодиода 
 byte scrCnt = 0; // счетчик для таймера экрана
 long recDistance1 = 0; // дистанция 1 с Uno
 long recDistance2 = 0; // дистанция 2 с Uno
 long diff = 0; // разница
 int joystickData = 0; // джойстик
+
 // переменные и константы для обработки сигнала кнопки
 boolean flagPress = false;    // признак кнопка в нажатом состоянии
 boolean flagClick = false;    // признак нажатия кнопки (фронт)
@@ -59,7 +61,9 @@ void setup() {
   display.cp437(true);         // Use full 256 char 'Code Page 437' font
 
   pinMode(PIN_BUTTON, INPUT_PULLUP); // Устаовили тип пина
-  pinMode(PIN_LED, OUTPUT);  //Setup the LED
+  pinMode(RED, OUTPUT);
+  pinMode(GRN, OUTPUT);
+  pinMode(pinY, INPUT);
 
   //добавляем задания в обработчик
   userScheduler.addTask(taskShowscreen);   
@@ -130,10 +134,26 @@ void loop() {
    display.println(recDistance2);
    display.setCursor(0, 20);
    display.println("Difference =");
-   diff = recDistance1 - recDistance2;
+   diff = recDistance2 - recDistance1; 
    display.println(diff);
    display.display(); 
    flagDistance2 = true;
+if ((diff >= 30) && (diff <= 70))
+{
+    digitalWrite(RED, LOW);
+    digitalWrite(GRN, HIGH);
+}
+if ((diff > 30) && (diff > 70))
+{
+    digitalWrite(RED, HIGH);
+    digitalWrite(GRN, HIGH);
+}
+
+if ((diff < 30) && (diff < 70))
+{
+    digitalWrite(RED, HIGH);
+    digitalWrite(GRN, LOW);
+}
  //  Serial.print("tempStr =");
 //   Serial.println(tempStr);
   }
@@ -179,8 +199,8 @@ void buttonclick() { //
 //  Serial.print("clicks=");
 //  Serial.println(clicks);
     flagClick = false;       // сброс признака фронта кнопки
-    ledState = ! ledState;   // инверсия состояние светодиода
-    digitalWrite(PIN_LED, ledState);  // вывод состояния светодиода   
+
+
     
   }
 }
@@ -207,6 +227,6 @@ if (Serial.available() > 0) {  // если есть что-то на вход
 
 void sendData(){
 // считать джойстик
-joystickData = 59;
+joystickData = analogRead(pinY);
 Serial.println(joystickData);
 }
