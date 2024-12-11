@@ -37,8 +37,8 @@ void loop() {
   tempStr = recieveData();
   if (tempStr != "") {
   servoAngle = tempStr.toInt();
-  Serial.println("angle=");
-  Serial.println(servoAngle * 90 / 511);
+ // Serial.println("angle=");
+ // Serial.println(servoAngle * 90 / 511);
   myservo.write(servoAngle * 90 / 511);
   }
  
