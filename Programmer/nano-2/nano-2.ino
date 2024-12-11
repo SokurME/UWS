@@ -1,15 +1,17 @@
 #include <TaskScheduler.h>
+#include <Servo.h>
 
 //byte cnt = 0; // счетчик для таймера экрана
 #define PIN_TRIG 3
 #define PIN_ECHO 4
 
+Servo myservo;
 long duration, cm;
 unsigned long time;
 String tempStr = "";
 String strData = ""; // для данных с Serial
 boolean recievedFlag = false; // флаг получения данных на Serial
-int servoAngle = 0; // угол поворота
+float servoAngle = 0.0; // угол поворота
 
 // Создаем объекты 
 Scheduler userScheduler;   // планировщик
@@ -22,6 +24,7 @@ void setup() {
   Serial.begin(9600);
   pinMode(PIN_TRIG, OUTPUT);
   pinMode(PIN_ECHO, INPUT);
+  myservo.attach(9, 1000, 2000);
 
  //добавляем задания в обработчик
   userScheduler.addTask(taskSenddata);   
@@ -34,6 +37,9 @@ void loop() {
   tempStr = recieveData();
   if (tempStr != "") {
   servoAngle = tempStr.toInt();
+  Serial.println("angle=");
+  Serial.println(servoAngle * 90 / 511);
+  myservo.write(servoAngle * 90 / 511);
   }
  
 }
