@@ -127,7 +127,7 @@ def yaw_on_line(img):
     if found:
         try:
             # если курс близок к нулю, то его не надо корректировать
-            if (178.0 < line_yaw < 180) or (0 < line_yaw < 2.0):
+            if (170.0 < line_yaw < 180) or (0 < line_yaw < 10.0):
                 auv.set_motor_power(0, speed)
                 auv.set_motor_power(1, speed)
                 return True
@@ -286,5 +286,9 @@ while True:
         stop_round(finish_count)
 
     time.sleep(0.01)
+    
+    
+    
+    
     
     
