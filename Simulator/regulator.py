@@ -16,6 +16,7 @@
 import cv2
 import numpy as np
 import math
+import time
 
 # Данная конструкция позволяет запускать скрипт как на аппарате MiddleAUV,
 # так и на обычном компьюьтере или Raspberry Pi. В случае, если при попытке
@@ -51,8 +52,8 @@ def detect_shape(drawing, cnt):
         if area < 500:
             return None
 
-    #    (circle_x, circle_y), circle_radius = cv2.minEnclosingCircle(cnt)
-    #    circle_area = circle_radius ** 2 * math.pi
+        (circle_x, circle_y), circle_radius = cv2.minEnclosingCircle(cnt)
+        circle_area = circle_radius ** 2 * math.pi
 
         rectangle = cv2.minAreaRect(cnt)
         box = cv2.boxPoints(rectangle)
@@ -61,14 +62,14 @@ def detect_shape(drawing, cnt):
         rect_w, rect_h = rectangle[1][0], rectangle[1][1]
         aspect_ratio = max(rect_w, rect_h) / min(rect_w, rect_h)
 
-      #  triangle = cv2.minEnclosingTriangle(cnt)[1]
-     #   triangle = np.int0(triangle)
-     #   triangle_area = cv2.contourArea(triangle)
+        triangle = cv2.minEnclosingTriangle(cnt)[1]
+        triangle = np.int0(triangle)
+        triangle_area = cv2.contourArea(triangle)
 
         shapes_areas = {
-   #         'circle': circle_area,
+            'circle': circle_area,
             'rectangle' if aspect_ratio > 1.2 else 'square': rectangle_area,
-      #      'triangle': triangle_area,
+            'triangle': triangle_area,
         }
 
         diffs = {
@@ -77,16 +78,16 @@ def detect_shape(drawing, cnt):
 
         shape_name = min(diffs, key=diffs.get)
 
-        line_color = (255,255,255)
+        line_color = (0,0,0)
 
-     #   if shape_name == 'circle':
-     #       cv2.circle(drawing, (int(circle_x), int(circle_y)), int(circle_radius), line_color, 2, cv2.LINE_AA)
+        if shape_name == 'circle':
+            cv2.circle(drawing, (int(circle_x), int(circle_y)), int(circle_radius), line_color, 2, cv2.LINE_AA)
 
         if shape_name == 'rectangle' or shape_name == 'square':
             cv2.drawContours(drawing, [box], 0, line_color, 2, cv2.LINE_AA)
 
-     #   if shape_name == 'triangle':
-         #   cv2.drawContours(drawing, [triangle], 0, line_color, 2, cv2.LINE_AA)
+        if shape_name == 'triangle':
+            cv2.drawContours(drawing, [triangle], 0, line_color, 2, cv2.LINE_AA)
 
         return shape_name
     except:
@@ -114,21 +115,24 @@ def calc_angle(drawing, cnt):
             edge = edge_second
 
         # Вычисляем угол по длинной стороне.
-        angle = -((180.0 / math.pi * math.acos(edge[0] / (cv2.norm((1, 0)) * cv2.norm(edge)))) - 90)
-
+        angle = -((180.0 / math.pi * math.acos(edge[0] / (cv2.norm((1, 0)) * cv2.norm(edge))))-90)
+        
         return angle if not math.isnan(angle) else 0
     except:
         return 0
 
 if __name__ == '__main__':
     color = (
-        (  60,  150,  140),
-        ( 180, 255, 255),
+        (60,  150,  140),
+        (180, 255, 255),
     )
 
    # cap = cv2.VideoCapture(0)
     
-    angle_old = 0
+
+    angle = 90
+    yaw_old = auv.get_yaw()
+    
     while True:
         #ok, img = cap.read()
         img = auv.get_image_bottom()
@@ -154,7 +158,7 @@ if __name__ == '__main__':
                # print(angle)
 
                 font = cv2.FONT_HERSHEY_DUPLEX
-                cv2.putText(drawing, 'angle: %d' % angle, (5, 30), font, 1, (255,255,255), 1, cv2.LINE_AA)
+                cv2.putText(drawing, 'angle: %d' % angle, (5, 30), font, 1, (0,0,0), 1, cv2.LINE_AA)
 
         if IS_AUV:
             # Задаём тягу, прямо пропорциональную найденному углу отклонения.
@@ -162,16 +166,22 @@ if __name__ == '__main__':
             #
             # angle - отклонение угла аппарата от угла вращения полоски.
 
-            power = max(min(angle * 0.75, 50), -50)
-            print(angle_old- angle)
-            if angle_old > angle:
-                auv.set_motor_power(1, -power)
-                auv.set_motor_power(0, power)
-            else:
+            power = max(min(angle * 0.75, 40), -40)
+
+            yaw = auv.get_yaw()
+            if yaw_old > yaw:
                 auv.set_motor_power(1, power)
                 auv.set_motor_power(0, -power)
-            angle_old = angle
+            else:
+                auv.set_motor_power(1, -power)
+                auv.set_motor_power(0, power)
             
+            if int(angle) < 5:
+                yaw = auv.get_yaw()
+                auv.set_motor_power(1, 100)
+                auv.set_motor_power(0, 100)
+                time.sleep(1)
+                yaw_old = yaw
             # Таким образом, у нас получился простейший
             # пропорциональный регулятор (proportional controller, он же P-регулятор).
 
@@ -179,16 +189,17 @@ if __name__ == '__main__':
                 mur_view.show(drawing, 0)
         #else:
             cv2.imshow('img', drawing)
-            cv2.waitKey(5)
+            cv2.waitKey(1)
             
-     #   if abs(angle) < 20:
-      #      auv.set_motor_power(1, 2000)
-       #     auv.set_motor_power(0, 2000)
-            #break
-        
-    #img.release()
+            
 
     if HAVE_AUV_VIDEO_SERVER:
         mur_view.stop()
 
     print("done")
+    
+    
+    
+    
+    
+    

@@ -109,9 +109,8 @@ void loop() {
   // Serial.println("f2");
    display.setTextSize(1);
    display.setCursor(0, 0);
-   display.println("Dist 1 =");
+   display.print("Distance 1 = ");
    recDistance1 = tempStr.toInt();
-   display.setCursor(0, 10);
    display.println(recDistance1);
    display.display(); 
    flagDistance1 = true;
@@ -123,17 +122,15 @@ void loop() {
  flagShowscreen = false;
  flagDistance1 = false;
  if (!flagDistance2){
- display.clearDisplay();
  display.setTextSize(1);
  tempStr = recieveData();
   if (tempStr != "") {
-   display.setCursor(0, 0);
-   display.println("Dist 2 =");
-   recDistance2 = tempStr.toInt();
-   display.setCursor(0, 10);
-   display.println(recDistance2);
    display.setCursor(0, 20);
-   display.println("Difference =");
+   display.print("Distance 2 = ");
+   recDistance2 = tempStr.toInt();
+   display.println(recDistance2);
+   display.setCursor(0, 40);
+   display.print("Difference = ");
    diff = recDistance2 - recDistance1; 
    display.println(diff);
    display.display(); 
