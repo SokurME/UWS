@@ -51,7 +51,7 @@ void setup() {
 
   //инициализация дисплея  
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
-//    Serial.println(F("SSD1306 allocation failed"));
+
     for(;;); // Don't proceed, loop forever
   }
   // Clear the buffer
@@ -78,7 +78,9 @@ void loop() {
   userScheduler.execute();
   
  switch (clicks) { 	// проверка порядка нажатия кнопки
- case  1: //
+ case  1:
+  digitalWrite(RED, LOW);
+  digitalWrite(GRN, LOW);
   flagDistance2 = false;
   if (!flagShowscreen){
   taskShowscreen.enable();   //включаем задание
@@ -91,7 +93,6 @@ void loop() {
   }
   
   if (scrCnt > 2) {  // через 2 с очищаем дисплей
-  // Serial.println(scrCnt);
    taskShowscreen.disable();
    scrCnt = 0;
      if (clicks == 1) {
@@ -106,7 +107,6 @@ void loop() {
  display.clearDisplay();
  tempStr = recieveData();
   if (tempStr != "") {
-  // Serial.println("f2");
    display.setTextSize(1);
    display.setCursor(0, 0);
    display.print("Distance 1 = ");
@@ -151,8 +151,6 @@ if ((diff < 30) && (diff < 70))
     digitalWrite(RED, HIGH);
     digitalWrite(GRN, LOW);
 }
- //  Serial.print("tempStr =");
-//   Serial.println(tempStr);
   }
  }
  tempStr = recieveData(); // читаем, чтобы очищать буфер
@@ -193,8 +191,6 @@ void buttonclick() { //
    if (clicks == 4)
        {clicks = 1;}
  
-//  Serial.print("clicks=");
-//  Serial.println(clicks);
     flagClick = false;       // сброс признака фронта кнопки
 
 

@@ -1,7 +1,6 @@
 #include <TaskScheduler.h>
 #include <Servo.h>
 
-//byte cnt = 0; // счетчик для таймера экрана
 #define PIN_TRIG 3
 #define PIN_ECHO 4
 
@@ -37,8 +36,6 @@ void loop() {
   tempStr = recieveData();
   if (tempStr != "") {
   servoAngle = tempStr.toInt();
- // Serial.println("angle=");
- // Serial.println(servoAngle * 90 / 511);
   myservo.write(servoAngle * 90 / 511);
   }
  
