@@ -8,7 +8,7 @@ auv = mur.mur_init()
 # диапазоны цветов корзин
 green_color = ((45, 50, 50), (75, 255, 255))
 yellow_color = ((20, 50, 50), (40, 255, 255))
-blue_color = ((105, 50, 50), (135, 255, 255))
+blue_color = ((60, 150, 140), (180, 255, 255))
 
 # переменные подсчета корзин и подсчета очков корзин
 bin_count = 0
@@ -113,7 +113,11 @@ def detect_tube(img):
 
             ellipse = cv.fitEllipse(cont)
             x, y, angle = ellipse
-
+            try:
+                 to_draw = image.copy()
+                 cv.circle(to_draw, (x, y), 2, (255, 0, 255), 2)
+                 cv.imshow("cyan", to_draw)
+                 cv.waitKey(1)
             return True, x, y, angle
 
     return False, 0, 0, 0
@@ -127,7 +131,7 @@ def yaw_on_line(img):
     if found:
         try:
             # если курс близок к нулю, то его не надо корректировать
-            if (178.0 < line_yaw < 180) or (0 < line_yaw < 2.0):
+            if (178.0 < line_yaw < 180) or (0 < line_yaw < 5.0):
                 auv.set_motor_power(0, speed)
                 auv.set_motor_power(1, speed)
                 return True
@@ -157,8 +161,14 @@ def yaw_on_line(img):
 # стабилизация над трубой по оси x
 def stab_on_line(img):
     found, x, y, angle = detect_tube(img)
-
+    
+            
     if found:
+        
+
+        cv.rectangle(img, (int(x[0]),int(y[0])), (int(x[1]),int(y[1])), (0,0,0), 10)
+        
+        
         # нахождение значения отклонения с нижней камеры,
         # разрешение камеры 240 на 320
         x_center = x[0] - (320 / 2)
@@ -169,7 +179,9 @@ def stab_on_line(img):
             if length < 15.0:
                 auv.set_motor_power(4, 0)
                 return True
-
+           
+           
+            
             # корректировка положения над трубой
             output_side = stab_on_line.regulator_side.process(x_center)
             output_side = clamp(output_side, -50, 50)
@@ -271,11 +283,15 @@ def stable_on_bin(color, img):
 
 while True:
     image = auv.get_image_bottom()
+    drawing = image.copy()
+    cv.imshow('img', drawing)
+    cv.waitKey(0)
+    
     # поддержание одной глубины
-    keep_depth(2.9)    
+    keep_depth(1.5)    
     # стабилизация над трубой и поддержание курса
-    stab_on_line(image)
-    yaw_on_line(image)
+    stab_on_line(drawing)
+    yaw_on_line(drawing)
 
     # стабилизация над корзиной в зависимости от цвета
     stable_on_bin(yellow_color, image)
@@ -286,5 +302,15 @@ while True:
         stop_round(finish_count)
 
     time.sleep(0.01)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
