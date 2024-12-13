@@ -49,7 +49,7 @@ def detect_shape(drawing, cnt):
     try:
         area = cv2.contourArea(cnt)
 
-        if area < 200:
+        if area < 2000:
             return None
       
         (circle_x, circle_y), circle_radius = cv2.minEnclosingCircle(cnt)
@@ -138,7 +138,6 @@ def keep_depth(depth_to_set):
 # Функция удержания курса
 def keep_yaw(yaw_to_set, power):
     current_yaw = to_360(auv.get_yaw())
-    print(current_yaw)
     er = clamp_to_360(yaw_to_set - current_yaw)
     er = to_180(er)
     res = er * 0.7
@@ -189,7 +188,8 @@ if __name__ == '__main__':
                     areas = [
                         cv2.contourArea(cnt) if (detect_shape(drawing, cnt) == 'rectangle') else 0 for cnt in contours
             ]
-
+                    if len(areas) > 1:
+                        keep_yaw(0, 30)
                     if (len(areas) > 0) and (max(areas) > 200):
                         cnt = contours[np.argmax(areas)]
     
@@ -223,6 +223,11 @@ if __name__ == '__main__':
      #   mur_view.stop()
 
     print("done")
+    
+    
+    
+    
+    
     
     
     

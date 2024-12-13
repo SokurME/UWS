@@ -1,316 +1,239 @@
-import cv2 as cv
-import pymurapi as mur
+import cv2
+import numpy as np
 import math
 import time
 
-auv = mur.mur_init()
+# ПОМЕНЯЙТЕ ПУТЬ!
+cap = cv2.VideoCapture('C:\\nto_final_task\\data\\video.mp4')
 
-# диапазоны цветов корзин
-green_color = ((45, 50, 50), (75, 255, 255))
-yellow_color = ((20, 50, 50), (40, 255, 255))
-blue_color = ((60, 150, 140), (180, 255, 255))
+# диапазон цветов обломков
+colors_dict = {
+    'red': ((160, 50, 50), (180, 255, 255)),
+    'yellow': ((20, 50, 50), (40, 255, 255)),
+    'green': ((45, 50, 50),(75, 255, 255)),
+}
+# шрифт
+font = cv2.FONT_HERSHEY_PLAIN   
+# списки для записи имен фигур и для записи распознанных чисел в таблице
+storage = []
+digits = []
+# переменные для подсчета распознанных фигур
+triangles = 0
+circles = 0
+squares = 0
+# определение начала и конца миссии
+start = False
+finish = False
 
-# переменные подсчета корзин и подсчета очков корзин
-bin_count = 0
-finish_count = 0
+# путь к файлам для распознавания цифр
+samples = np.loadtxt('C:\\nto_final_task\\data\\generalsamples.data', np.float32)
+# ПОМЕНЯЙТЕ ПУТИ!
+responses = np.loadtxt('C:\\nto_final_task\\data\\generalresponses.data', np.float32)
 
-
-# класс PD-регулятора
-class PD(object):
-    _kp = 0.0
-    _kd = 0.0
-    _prev_error = 0.0
-    _timestamp = 1
-
-    def __init__(self):
-        pass
-
-    def set_p_gain(self, value):
-        self._kp = value
-
-    def set_d_gain(self, value):
-        self._kd = value
-
-    def process(self, error):
-        timestamp = int(round(time.time() * 1000))
-
-        output = self._kp * error + self._kd / (timestamp - self._timestamp) * (error - self._prev_error)
-
-        self._timestamp = timestamp
-        self._prev_error = error
-        return output
-
-# функция ограничивающая диапазон значений
-def clamp(value, min_v, max_v):
-    if value > max_v:
-        return max_v
-    if value < min_v:
-        return min_v
-    return value
+responses = responses.reshape((responses.size, 1))
+# распознавание цифр 
+model = cv2.ml.KNearest_create()
+model.train(samples, cv2.ml.ROW_SAMPLE, responses)
 
 
-# функция чтобы плыть прямо после завершения сброса
-def go_straight():
-    auv.set_motor_power(0, 15)
-    auv.set_motor_power(1, 15)
-    time.sleep(3)
-
-
-# функция для сброса сферы
-def drop_sphere():
-    auv.drop()
-    time.sleep(1)
-    go_straight()
-
-
-# функция завершающая попытку
-def stop_round(r):
-    # движение против или по часовой стрелке
-    power = 12 * (1 if (r % 2 == 1) else -1)
-    auv.set_motor_power(0, -power)
-    auv.set_motor_power(1, power)
-
-    # всплытие
-    keep_depth(0.0)
-    time.sleep(20)
-
-# функция поддержания глубины
-def keep_depth(depth_to_set):
-    try:
-        error = auv.get_depth() - depth_to_set
-
-        output = keep_depth.regulator.process(error)
-        output = clamp(output, -100, 100)
-        auv.set_motor_power(2, output)
-        auv.set_motor_power(3, output)
-
-    except AttributeError:
-        keep_depth.regulator = PD()
-        keep_depth.regulator.set_p_gain(20)
-        keep_depth.regulator.set_d_gain(12)
-
-# распознавание контуров
-def contours_recognize(color, img):
-    # изображение с камеры преобразуется в HSV формат
-    image_hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-    # бинаризация изображения
-    image_bin = cv.inRange(image_hsv, color[0], color[1])
-    # поиск контура
-    contours, _ = cv.findContours(image_bin, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+# поиск контура по цвету
+def find_contours(img, color):
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    img_mask = cv2.inRange(img_hsv, color[0], color[1])
+    contours, _ = cv2.findContours(img_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     return contours
     
+
+# поиск фигуры по цвету и подпись этих фигур соответственно таблице
+def detect_shape(drawing, cnt, num, color):
+    global font
+    area = cv2.contourArea(cnt)
+    if area < 500:
+        return
+    # описанная окружность
+    (circle_x, circle_y), circle_radius = cv2.minEnclosingCircle(cnt)
+    circle_area = circle_radius ** 2 * math.pi
+    # описанный прямоугольник (с вращением)
+    rectangle = cv2.minAreaRect(cnt)
+    # получение контура описанного прямоугольника
+    box = cv2.boxPoints(rectangle)
+    box = np.int0(box)
+    # вычисление площади и соотношения сторон прямоугольника
+    rectangle_area = cv2.contourArea(box)
+    rect_w, rect_h = rectangle[1][0], rectangle[1][1]
+    aspect_ratio = max(rect_w, rect_h) / min(rect_w, rect_h)
+    # описанный треугольник
+    try:
+        triangle = cv2.minEnclosingTriangle(cnt)[1]
+        triangle = np.int0(triangle)
+        triangle_area = cv2.contourArea(triangle)
+    except:
+        triangle_area = 0
+    # заполнение словаря, который будет содержать площади каждой из описанных фигур
+    shapes_areas = {
+        'circle': circle_area,
+        'square' if aspect_ratio < 1.25 else 'rectangle': rectangle_area,         
+        'triangle': triangle_area,
+    }
+    # заполнение аналогичного словаря, который будет содержать
+    # разницу между площадью контора и площадью каждой из фигур
+    diffs = {
+        name: abs(area - shapes_areas[name]) for name in shapes_areas
+    }
     
-# функция нахождения синей трубы с помощью нижней камеры
-def detect_tube(img):
-    contours = contours_recognize(blue_color, img)
-    # если контур найден и его площадь удовлетворяет условию
-    # то в этом контуре отрисовывается эллипс для нахождения
-    # угла отклонения от курса и координаты
-    if contours:
-        for cont in contours:
-            if cv.contourArea(cont) < 300:
-                continue
-
-            ellipse = cv.fitEllipse(cont)
-            x, y, angle = ellipse
-            try:
-                 to_draw = image.copy()
-                 cv.circle(to_draw, (x, y), 2, (255, 0, 255), 2)
-                 cv.imshow("cyan", to_draw)
-                 cv.waitKey(1)
-            return True, x, y, angle
-
-    return False, 0, 0, 0
-
-
-# функция для движения вдоль трубы
-def yaw_on_line(img):
-    speed = 10
-    found, x, y, line_yaw = detect_tube(img)
+    # получение имени фигуры с наименьшей разницой площади
+    shape_name = min(diffs, key=diffs.get)
     
-    if found:
-        try:
-            # если курс близок к нулю, то его не надо корректировать
-            if (178.0 < line_yaw < 180) or (0 < line_yaw < 5.0):
-                auv.set_motor_power(0, speed)
-                auv.set_motor_power(1, speed)
-                return True
-
-            # корректировка курса
-            error = line_yaw
-            out = yaw_on_line.regulator.process(error)
-            output = clamp(out, -100, 100)
-
-            output_0 = clamp(output + speed, -100, 100)
-            output_1 = clamp(-output + speed, -100, 100)
-
-            auv.set_motor_power(0, output_0)
-            auv.set_motor_power(1, output_1)
-
-        except AttributeError:
-            yaw_on_line.regulator = PD()
-            yaw_on_line.regulator.set_p_gain(0.4)
-            yaw_on_line.regulator.set_d_gain(0.4)
-
-        except ZeroDivisionError:
-            return False
-
-    return False
-
-
-# стабилизация над трубой по оси x
-def stab_on_line(img):
-    found, x, y, angle = detect_tube(img)
+    # получение высоты, для того, чтобы игнорировать желтые границы трубы
+    _, _, _, h = cv2.boundingRect(cnt)
     
-            
-    if found:
+    # поиск координат x, y для написания текста
+    moments = cv2.moments(cnt)
+    
+    try:
+       
+        x = int(moments['m10'] / moments['m00'])
+        y = int(moments['m01'] / moments['m00'])
         
+        # фигуры (кроме прямоугольников и фигур высотой больше 90) подписываются в соответствии с классом из таблицы
+        if shape_name != 'rectangle' and h < 90:
+            if shape_name == 'square': shape = shape_name + ' ' + num[0]
+            if shape_name == 'triangle': shape = shape_name + ' ' + num[1]
+            if shape_name == 'circle': shape = shape_name + ' ' + num[2]
+                
+            cv2.putText(drawing, color, (x-29, y-28), font, 1, (  0,  0,  0), 3, cv2.LINE_AA)
+            cv2.putText(drawing, color, (x-30, y-27), font, 1, (255,255,255), 1, cv2.LINE_AA)
+            
+            cv2.putText(drawing, shape, (x-30, y+32), font, 1, (  0,  0,  0), 3, cv2.LINE_AA)
+            cv2.putText(drawing, shape, (x-31, y+31), font, 1, (255,255,255), 1, cv2.LINE_AA)
+            
+            # если фигура проходит экран в районе низа экрана, то ее значения возвращаются для записи в список storage
+        if 400 < y < 420:
+            print(shape_name)
+            return shape_name
+            
+    except ZeroDivisionError:
+        pass
 
-        cv.rectangle(img, (int(x[0]),int(y[0])), (int(x[1]),int(y[1])), (0,0,0), 10)
+
+# функция для подсчета фигур, исходя из записанного списка storage
+def count_shapes(shape_store):
+    global triangles
+    global squares
+    global circles
+    # если в списке половина элементов 
+    # принадлежат какой-то из фигур, то к кол-ву этих фигур +1
+    
+    if shape_store.count('triangle') > 2: triangles += 1    
+    if shape_store.count('square') > 2: squares += 1         
+    if shape_store.count('circle') > 2: circles += 1
+
+
+# распознавание цифр из таблицы на старте
+def digits_recognize(img):
+    three_strings = []
+    # поиск контуров
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img_mask = cv2.adaptiveThreshold(img_hsv, 255, 1, 1, 45, 10)
+    contours, hierarchy = cv2.findContours(img_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(img, contours, 0, (0,255,0), 3)
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        # ограничение контуров по площади
+        if  area > 300:
+            [x, y, w, h] = cv2.boundingRect(cnt)
+            # ограничение по высоте
+            if 25 < h < 70:
+                # поиск цифры
+                cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                roi = img_mask[y:y + h, x:x + w]
+                roismall = cv2.resize(roi, (10, 10))
+                roismall = roismall.reshape((1, 100))
+                roismall = np.float32(roismall)
+                retval, results, neigh_resp, dists = model.findNearest(roismall, k=1)
+                string = str(int((results[0][0])))
+
+                
+                # три распознанных числа записываются в список и эти значения возвращаются
+                three_strings.append(string)               
+                if len(three_strings) == 3:
+                    return three_strings
+                    
+
+
+if (cap.isOpened()== False): 
+  print("Error opening video stream or file")
+
+while(cap.isOpened()):
+    ok, drawing = cap.read()
+    
+    if ok == True:
+        # распознавание цифр до "старта" миссии
+        if start != True:
+            # выравнивание перспективы
+            pts1 = np.float32([[280, 0], [640, 0],
+                       [340, 480], [640, 480]])
+            
+            pts2 = np.float32([[0, 0], [640, 0],
+                       [0, 480], [640, 480]])
         
+            matrix = cv2.getPerspectiveTransform(pts1, pts2)
+            result = cv2.warpPerspective(drawing, matrix, (640, 480))
+            # распознавание цифр
+            digits = digits_recognize(result)
+            cv2.imshow('digits', result)
+            
+            if digits != None:
+                digits.reverse()
+                print('square:', digits[0], ' triangle:', digits[1], ' circle:', digits[2])
+                start = True
         
-        # нахождение значения отклонения с нижней камеры,
-        # разрешение камеры 240 на 320
-        x_center = x[0] - (320 / 2)
-        try:
-            length = abs(x_center)
-            # если отклонение не большое, то на четвертый двигатель
-            # не надо подавать тягу
-            if length < 15.0:
-                auv.set_motor_power(4, 0)
-                return True
-           
-           
+        # старт миссии    
+        if start and finish != True:
+        
+            # поиск квадратов, треугольников и кругов по словарю цветов
+            for name in colors_dict:
+                contours = find_contours(drawing, colors_dict[name])
             
-            # корректировка положения над трубой
-            output_side = stab_on_line.regulator_side.process(x_center)
-            output_side = clamp(output_side, -50, 50)
-            auv.set_motor_power(4, -output_side)
-
-        except AttributeError:
-
-            stab_on_line.regulator_side = PD()
-            stab_on_line.regulator_side.set_p_gain(0.2)
-            stab_on_line.regulator_side.set_d_gain(0.4)
-
-        except ZeroDivisionError:
-            return False
-
-    return False
-
-
-# функции поиска корзины по цвету
-def find_bin(color, img):
-    cnt = contours_recognize(color, img)
-
-    if cnt:
-        for c in cnt:
-            area = cv.contourArea(c)
-            if abs(area) < 100:
-                continue
-            (x, y), radius = cv.minEnclosingCircle(c)
+                if not contours:
+                    continue
             
-            return True, x, y
-            
-    return False, 0, 0
-
-
-# функция стабилизации над корзиной по осям X и Y
-def stabilization(color, img):
-    found, x, y = find_bin(color, img)
-    if found:
-        # разрешение нижней камеры 240 на 320
-        x_center = x - (320 / 2)
-        y_center = y - (240 / 2)
-
-        try:
-            # если расстояние от центра камеры до корзины подхлдящее,
-            # то возврашается True
-            length = math.sqrt(x_center ** 2 + y_center ** 2)
-
-            if length < 25.0:
-                auv.set_motor_power(0, 0)
-                auv.set_motor_power(1, 0)
-                auv.set_motor_power(4, 0)
-                return True
-
-            # корректировка положения кад корзиной
-            output_forward = stabilization.regulator_forward.process(y_center)
-            output_side = stabilization.regulator_side.process(x_center)
-
-            output_forward = clamp(output_forward, -50, 50)
-            output_side = clamp(output_side, -50, 50)
-
-            auv.set_motor_power(0, -output_forward)
-            auv.set_motor_power(1, -output_forward)
-            auv.set_motor_power(4, -output_side)
-
-        except AttributeError:
-            stabilization.regulator_forward = PD()
-            stabilization.regulator_forward.set_p_gain(0.2)
-            stabilization.regulator_forward.set_d_gain(0.4)
-
-            stabilization.regulator_side = PD()
-            stabilization.regulator_side.set_p_gain(0.2)
-            stabilization.regulator_side.set_d_gain(0.4)
-
-        except ZeroDivisionError:
-            return False
-    return False
-
-
-# функция вызываемая тогда, когда аппарат стабилизировался над корзиной
-def stable_on_bin(color, img):
-    global finish_count
-    global bin_count
-    # проверка стабилизации по цвету корзины
-    stable = stabilization(color, img)
-    if stable:
-        # прибавление баллов в зависимости от цвета корзины
-        if color == green_color:
-            finish_count += 1
-
-        elif color == yellow_color:
-            finish_count += 2
-
-        # сброс сферы
-        drop_sphere()
-        # подсчет корзин
-        bin_count += 1
-        return True
-    return False
-
-
-while True:
-    image = auv.get_image_bottom()
-    drawing = image.copy()
-    cv.imshow('img', drawing)
-    cv.waitKey(0)
+                for cnt in contours:
+                    shape_name = detect_shape(drawing, cnt, digits, name)
+                
+                       # запись в список фигур всех найденных фигур, кроме прямоугольников и нулевых значений
+                    if shape_name is not None and shape_name != 'rectangle':
+                        storage.append(shape_name)
+                        
+                    
+                       # если кол-во эл-ов списка равно 6, то происходит подсчет фигур в списке
+                    if len(storage) == 6:
+                        count_shapes(storage)
+                       # затем список очищается
+                        storage.clear()
+                    
+                       # если посчитано больше пяти фигур, то миссия завершена
+                    if triangles + squares + circles > 5:
+                        finish = True
     
-    # поддержание одной глубины
-    keep_depth(1.5)    
-    # стабилизация над трубой и поддержание курса
-    stab_on_line(drawing)
-    yaw_on_line(drawing)
+        if finish:
+            print('\nsquares:  ', squares, '\ntriangles:', triangles,'\ncircles:  ', circles)
+       
+        # вывод текста с подсчетом фигур
+        cv2.putText(drawing, 'squares: ' + str(squares), (290, 390), font, 1, (0,0,0), 3, cv2.LINE_AA) 
+        cv2.putText(drawing, 'squares: ' + str(squares), (291, 389), font, 1, (255, 255, 255), 1, cv2.LINE_AA) 
+        cv2.putText(drawing, 'triangles: ' + str(triangles), (290, 410), font, 1, (0,0,0), 3, cv2.LINE_AA)    
+        cv2.putText(drawing, 'triangles: ' + str(triangles), (291, 409), font, 1, (255, 255, 255), 1, cv2.LINE_AA) 
+        cv2.putText(drawing, 'circles: ' + str(circles), (290, 430), font, 1, (0,0,0), 3, cv2.LINE_AA)
+        cv2.putText(drawing, 'circles: ' + str(circles), (291, 429), font, 1, (255, 255, 255), 1, cv2.LINE_AA)
+    
+                
+        cv2.imshow("draw", drawing)
+        cv2.waitKey(1)
 
-    # стабилизация над корзиной в зависимости от цвета
-    stable_on_bin(yellow_color, image)
-    stable_on_bin(green_color, image)
-
-    # если пройдено пять корзин, то надо заканчивать раунд
-    if bin_count == 5:
-        stop_round(finish_count)
-
-    time.sleep(0.01)
+    else:
+        break
     
+    time.sleep(0.03)
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+cap.release()
