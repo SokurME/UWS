@@ -24,19 +24,19 @@ import time
 # скрипт выполняется не на аппарате. И тогда для вывода изображений
 # мы будем задействовать imshow.
 
+try:
+    import pymurapi as mur
+    auv = mur.mur_init()
+    IS_AUV = True
 
-import pymurapi as mur
-auv = mur.mur_init()
-IS_AUV = True
+    try:
+        mur_view = auv.get_videoserver()
+        HAVE_AUV_VIDEO_SERVER = True
+    except AttributeError:
+        HAVE_AUV_VIDEO_SERVER = False
 
- #   try:
-#        mur_view = auv.get_videoserver()
- #       HAVE_AUV_VIDEO_SERVER = True
- #   except AttributeError:
-#        HAVE_AUV_VIDEO_SERVER = False
-
-#except ImportError:
- #   IS_AUV = False
+except ImportError:
+    IS_AUV = False
 
 def find_contours(img, color):
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -49,9 +49,9 @@ def detect_shape(drawing, cnt):
     try:
         area = cv2.contourArea(cnt)
 
-        if area < 2000:
+        if area < 500:
             return None
-      
+
         (circle_x, circle_y), circle_radius = cv2.minEnclosingCircle(cnt)
         circle_area = circle_radius ** 2 * math.pi
 
@@ -78,7 +78,7 @@ def detect_shape(drawing, cnt):
 
         shape_name = min(diffs, key=diffs.get)
 
-        line_color = (255,255,255)
+        line_color = (0,0,0)
 
         if shape_name == 'circle':
             cv2.circle(drawing, (int(circle_x), int(circle_y)), int(circle_radius), line_color, 2, cv2.LINE_AA)
@@ -115,144 +115,88 @@ def calc_angle(drawing, cnt):
             edge = edge_second
 
         # Вычисляем угол по длинной стороне.
-        angle = -((180.0 / math.pi * math.acos(edge[0] / (cv2.norm((1, 0)) * cv2.norm(edge)))) - 90)
-
+        angle = -((180.0 / math.pi * math.acos(edge[0] / (cv2.norm((1, 0)) * cv2.norm(edge))))-90)
+        
         return angle if not math.isnan(angle) else 0
     except:
         return 0
 
-def clamp(v, min, max):
-    if v < min:
-        return min
-    if v > max:
-        return max
-    return v
-
-
-def keep_depth(depth_to_set):
-    power = 30 * (auv.get_depth() - depth_to_set)
-    auv.set_motor_power(2, clamp(int(power), -100, 100))
-    auv.set_motor_power(3, clamp(int(power), -100, 100))
-
-
-# Функция удержания курса
-def keep_yaw(yaw_to_set, power):
-    current_yaw = to_360(auv.get_yaw())
-    er = clamp_to_360(yaw_to_set - current_yaw)
-    er = to_180(er)
-    res = er * 0.7
-    auv.set_motor_power(0, clamp(int(power - res), -100, 100))
-    auv.set_motor_power(1, clamp(int(power + res), -100, 100))
-    
-# двигаться вперёд
-def go_forward():
-    if (context.get_speed() != 30):
-        context.set_speed(30)
-        return False
-    else:
-        return True
-    
-def to_360(angle):
-    if angle > 0.0:
-        return angle
-    if angle <= 0.0:
-        return 360.0 + angle
-
-# Перевод угла из 0 <=> 360 в -180 <=> 180
-def to_180(angle):
-    if angle > 180.0:
-        return angle - 360.0
-    return angle
-    
-# Перевод угла >< 360 в 0 <=> 360
-def clamp_to_360(angle):
-    if angle < 0.0:
-        return angle + 360.0
-    if angle > 360.0:
-        return angle - 360.0
-    return angle
-    
 if __name__ == '__main__':
-    
     color = (
-        (120, 50, 50), (180, 255, 255)
+        (60,  150,  140),
+        (180, 255, 255),
     )
 
-  #  cap = cv2.VideoCapture(0)
-    now = time.time()
+   # cap = cv2.VideoCapture(0)
+    
+
+    angle = 90
+    yaw_old = auv.get_yaw()
+    
     while True:
+        #ok, img = cap.read()
         img = auv.get_image_bottom()
-        keep_depth(2.8)
-       # if (time.time() - now) > 10:
+       # if not ok:
+       #     break
+
         drawing = img.copy()
-        
         contours = find_contours(img, color)
 
-        angle = 0
-        if 2.6 < auv.depth < 3.0:
-            if contours:
+        
+
+        if contours:
             # Вычисляем площадь для каждого контура, а затем берём контур с наибольшей
             # площадью, но только если он совпадает с искомой фигурой.
-                    areas = [
-                        cv2.contourArea(cnt) if (detect_shape(drawing, cnt) == 'rectangle') else 0 for cnt in contours
+            areas = [
+                cv2.contourArea(cnt) if (detect_shape(drawing, cnt) == 'rectangle') else 0 for cnt in contours
             ]
-                      
 
-                    if (len(areas) > 0) and (max(areas) > 1000):
-                        cnt = contours[np.argmax(areas)]
-    
-                        angle = calc_angle(drawing, cnt)
-                        font = cv2.FONT_HERSHEY_DUPLEX
-                        cv2.putText(drawing, 'angle: %d' % angle, (5, 30), font, 1, (255,255,255), 1, cv2.LINE_AA)
-            while (time.time() - now) < 10:              
-                if angle < 15:
-                    keep_yaw(auv.get_yaw(), 30)
-                    auv.set_motor_power(0, 30)    
-                    auv.set_motor_power(1, 30)    
-                else:
-                    power = max(min(angle * 0.5, 30), -30)
-                    auv.set_motor_power(0, power)
-                    auv.set_motor_power(1, -power) 
-         #       power = - power
+            if (len(areas) > 0) and (max(areas) > 500):
+                cnt = contours[np.argmax(areas)]
+
+                angle = calc_angle(drawing, cnt)
+               # print(angle)
+
+                font = cv2.FONT_HERSHEY_DUPLEX
+                cv2.putText(drawing, 'angle: %d' % angle, (5, 30), font, 1, (0,0,0), 1, cv2.LINE_AA)
+
+        if IS_AUV:
+            # Задаём тягу, прямо пропорциональную найденному углу отклонения.
+            # Чем больше отклонение, тем сильнее будет тяга на движителях.
+            #
+            # angle - отклонение угла аппарата от угла вращения полоски.
+
+            power = max(min(angle * 0.75, 40), -40)
+
+            yaw = auv.get_yaw()
+            if yaw_old > yaw:
+                auv.set_motor_power(1, power)
+                auv.set_motor_power(0, -power)
+            else:
+                auv.set_motor_power(1, -power)
+                auv.set_motor_power(0, power)
             
-         
+            if int(angle) < 5:
+                yaw = auv.get_yaw()
+                auv.set_motor_power(1, 100)
+                auv.set_motor_power(0, 100)
+                time.sleep(1)
+                yaw_old = yaw
             # Таким образом, у нас получился простейший
             # пропорциональный регулятор (proportional controller, он же P-регулятор).
 
-      #      if HAVE_AUV_VIDEO_SERVER:
-      #          mur_view.show(drawing, 0)
-     #   else:
-        cv2.imshow('img', drawing)
-        cv2.waitKey(1)
+            if HAVE_AUV_VIDEO_SERVER:
+                mur_view.show(drawing, 0)
+        #else:
+            cv2.imshow('img', drawing)
+            cv2.waitKey(1)
+            
+            
 
-       #cap.release()
-
-  #  if HAVE_AUV_VIDEO_SERVER:
-     #   mur_view.stop()
+    if HAVE_AUV_VIDEO_SERVER:
+        mur_view.stop()
 
     print("done")
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     
     
