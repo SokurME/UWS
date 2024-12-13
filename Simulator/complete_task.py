@@ -2,13 +2,14 @@ import cv2 as cv
 import pymurapi as mur
 import math
 import time
+import numpy as np
 
 auv = mur.mur_init()
 
 # диапазоны цветов корзин
 green_color = ((45, 50, 50), (75, 255, 255))
 yellow_color = ((20, 50, 50), (40, 255, 255))
-blue_color = ((105, 50, 50), (135, 255, 255))
+blue_color = ((130, 50, 50), (180, 255, 255))
 
 # переменные подсчета корзин и подсчета очков корзин
 bin_count = 0
@@ -113,12 +114,27 @@ def detect_tube(img):
 
             ellipse = cv.fitEllipse(cont)
             x, y, angle = ellipse
+            
+            drawing = img.copy()
+            rectangle = cv.minAreaRect(cont)
+            box = cv.boxPoints(rectangle)
+            box = np.int0(box)
+            cv.drawContours(drawing, [box], 0, (0,0,255), 3)
+            cv.imshow('img', drawing)
+            cv.waitKey(1)
+        
 
             return True, x, y, angle
 
     return False, 0, 0, 0
 
-
+def turn_left():
+    yaw = auv.get_yaw()
+    while yaw <= 90: 
+        auv.set_motor_power(1, 5)
+        yaw = auv.get_yaw()
+    auv.set_motor_power(0, 5)
+    
 # функция для движения вдоль трубы
 def yaw_on_line(img):
     speed = 10
@@ -127,7 +143,7 @@ def yaw_on_line(img):
     if found:
         try:
             # если курс близок к нулю, то его не надо корректировать
-            if (170.0 < line_yaw < 180) or (0 < line_yaw < 10.0):
+            if (175.0 < line_yaw < 180) or (0 < line_yaw < 5.0):
                 auv.set_motor_power(0, speed)
                 auv.set_motor_power(1, speed)
                 return True
@@ -166,10 +182,12 @@ def stab_on_line(img):
             length = abs(x_center)
             # если отклонение не большое, то на четвертый двигатель
             # не надо подавать тягу
-            if length < 15.0:
+            if 0 < length < 2.0:
                 auv.set_motor_power(4, 0)
                 return True
-
+            if  length < 0:
+                print(length)
+                turn_left()
             # корректировка положения над трубой
             output_side = stab_on_line.regulator_side.process(x_center)
             output_side = clamp(output_side, -50, 50)
@@ -271,6 +289,8 @@ def stable_on_bin(color, img):
 
 while True:
     image = auv.get_image_bottom()
+    
+    
     # поддержание одной глубины
     keep_depth(2.9)    
     # стабилизация над трубой и поддержание курса
@@ -286,8 +306,6 @@ while True:
         stop_round(finish_count)
 
     time.sleep(0.01)
-    
-    
     
     
     
