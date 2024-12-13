@@ -13,7 +13,7 @@ colors = {
     'cyan': ((80, 50, 50), (100, 255, 255)),
     'orange': ((15, 50, 50), (30, 255, 255)),
     'red': ((0, 50, 50), (15, 255, 255)),
-    'magenta': ((140, 50, 50), (160, 255, 255)),
+    'magenta': ((120, 50, 50), (180, 255, 255)),
 }
 
 # соответствие формы объекта к цвету (согласно заданию)
@@ -40,7 +40,7 @@ def angle_between(p1, p2):
     yDiff = p2[1] - p1[1]
     return math.degrees(math.atan2(yDiff, xDiff) - (np.pi / 2))
 
-# функция для рассчёта расстояния от центра до точки
+# функция для расчёта расстояния от центра до точки
 def length_from_center(x, y):
     return math.sqrt(x ** 2 + y ** 2)
 
@@ -254,9 +254,9 @@ def go_back():
     else:
         return True
 
-# ожидание 5 секунд
+# ожидание 20 секунд
 def wait():
-    time.sleep(5)
+    time.sleep(20)
     return True
 
 # ожидание 3 секунды
@@ -289,7 +289,7 @@ def stabilize():
     yaw = mur.get_yaw()
     depth = mur.get_depth()
 
-    if abs(yaw - context.get_yaw()) < 1 and abs(depth - context.get_depth()) < 0.3:
+    if abs(yaw - context.get_yaw()) < 10 and abs(depth - context.get_depth()) < 0.3:
         if context.check_stabilization(timeout=5):
             return True
     else:
@@ -424,7 +424,7 @@ def stabilize_x_y_angle(x, y, angle):
 
     try:
         length = math.sqrt(x_center ** 2 + y_center ** 2)
-        if length < 2.0:
+        if length < 20.0:
             if context.check_stabilization(timeout=10):
                 return True
         else:
@@ -453,6 +453,7 @@ def stabilize_x_y_angle(x, y, angle):
 # обнаружение полоски определенного цвета
 def find_line(image, color):
     contours = find_contours(image, color)
+    show_contours(image, contours)
     if contours:
         for contour in contours:
             area = cv.contourArea(contour)
@@ -631,7 +632,7 @@ def detect_tag_shape():
         # определяем цвет стрелки, по которой
         # нужно следовать
         context.first_arrow_color = colors[tag_shape_to_color[tag_shape]]
-        print(tag_shape, '- follow', tag_shape_to_color[tag_shape], 'arrow')
+   #     print(tag_shape, '- follow', tag_shape_to_color[tag_shape], 'arrow')
         return True
     else:
         return False
@@ -650,6 +651,12 @@ def find_orange_circle():
         return True
     else:
         return False
+# показать видео
+def show_bottom():
+    image = mur.get_image_bottom()
+    cv.imshow('img', image)
+    cv.waitKey(1)
+        
 
 # стабилизироваться над оранжевым кругом
 def stabilize_over_orange_circle():
@@ -687,8 +694,8 @@ def detect_line_color():
 
 # установить обычную глубину (после захвата куба)
 def set_default_depth():
-    if (context.get_depth() != 3.0):
-        context.set_depth(3.0)
+    if (context.get_depth() != 2.5):
+        context.set_depth(2.5)
         return False
     else:
         return True
@@ -716,20 +723,38 @@ def stabilize_over_target_line():
 def stabilize_on_second_arrow():
     return stabilize_on_arrow(colors[context.line_color])
 
+def stabilize_over_magenta_line():
+    image = mur.get_image_bottom()
+    context.set_depth(2.5)
+    find, x, y, contour = find_line(image, colors['magenta'])
+ #   print(find, x, y, contour)
+    return stabilize_over_line(colors['magenta'])
+
+def keep_first():
+    while mur.get_yaw() != 90:
+        keep_yaw(90, 30)
+    return True
+    
 # основной код, выполняемый при запуске скрипта
 if __name__ == "__main__":
-    context.set_depth(1.8)
+    context.set_depth(2.5)
     context.set_yaw(0.0)
 
     # определим подзадачи нашей миссии
 
     # для того, чтобы добраться до платформы с кубом, нужно:
     go_to_box_platform = (
-        stabilize_over_blue_bin,
-        detect_tag_shape,            # определить маршрут по навигационной метке
-        stabilize_on_first_arrow,    # стабилизироваться над первой стрелкой
+        
+      #  show_bottom,
+        stabilize_over_magenta_line,
+        keep_first,
+        stabilize,  
         go_forward,                  # двигаться вперёд
-    )
+        wait,
+        stabilize,                   # стабилизируем положение
+        wait_short,  
+        stop,
+   )
 
     # поиск и захват куба
     find_and_grab_box = (
@@ -805,3 +830,32 @@ if __name__ == "__main__":
 
     time.sleep(3)
     
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    #
+   
+   
